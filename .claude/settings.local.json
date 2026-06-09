@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(Start-Sleep -Seconds 8)",
+      "Bash(Get-Content \"C:\\\\Users\\\\ykh19\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--20260515\\\\0eab3326-fc0c-441d-9b57-3beb3287e0e7\\\\tasks\\\\b3i50k9k8.output\" -Tail 20)",
+      "Bash(sleep 5 && tail -20 /c/Users/ykh19/AppData/Local/Temp/claude/d--20260515/0eab3326-fc0c-441d-9b57-3beb3287e0e7/tasks/b3i50k9k8.output 2>/dev/null || echo \"Server output not yet available\")",
+      "Read(//c/Users/ykh19/AppData/Local/Temp/claude/d--20260515/0eab3326-fc0c-441d-9b57-3beb3287e0e7/tasks/**)",
+      "Bash(Get-Content \"d:\\\\20260515\\\\src\\\\app\\\\\\(tabs\\)\\\\index.tsx\")",
+      "Bash(Measure-Object -Line)",
+      "Bash(npm start *)",
+      "Bash(supabase migration *)",
+      "Bash(supabase link *)",
+      "Bash(supabase storage *)",
+      "PowerShell(Stop-Process -Id 11600 -Force -ErrorAction SilentlyContinue)",
+      "Bash(netstat -tulpn)",
+      "Bash(cd d:\\\\\\\\20260515)",
+      "Bash(curl -s http://localhost:8086)"
+    ]
+  }
+}
