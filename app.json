@@ -5,10 +5,14 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/carrot.png",
-    "scheme": "20260515",
+    "scheme": "carrot",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/images/carrot.png"
+      "icon": "./assets/images/carrot.png",
+      "bundleIdentifier": "com.carrot0526.market",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
