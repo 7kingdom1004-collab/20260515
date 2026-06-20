@@ -58,7 +58,7 @@ export default function LoginScreen() {
       return;
     }
 
-    const redirectUrl = Linking.createURL('/');
+    const redirectUrl = Linking.createURL('auth/callback');
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
