@@ -8,13 +8,12 @@
     "scheme": "20260515",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/images/carrot.png"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/carrot.png",
-        "backgroundImage": "./assets/images/carrot.png"
+        "foregroundImage": "./assets/images/carrot.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.carrot0526.market"
