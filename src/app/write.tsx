@@ -13,21 +13,30 @@ async function uploadPhoto(uri: string): Promise<string | null> {
   try {
     const response = await fetch(uri);
     const blob = await response.blob();
-    const ext = blob.type.split('/')[1] || 'jpg';
+    const contentType = blob.type || 'image/jpeg';
+    const ext = (contentType.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
     const path = `${Date.now()}.${ext}`;
 
     const { data, error } = await supabase.storage
       .from('product-images')
-      .upload(path, blob, { contentType: blob.type });
+      .upload(path, blob, { contentType });
 
-    if (error || !data) return null;
+    if (error) {
+      console.error('이미지 업로드 실패:', error.message, error);
+      return null;
+    }
+    if (!data) {
+      console.error('이미지 업로드 실패: 데이터 없음');
+      return null;
+    }
 
     const { data: { publicUrl } } = supabase.storage
       .from('product-images')
       .getPublicUrl(data.path);
 
     return publicUrl;
-  } catch {
+  } catch (e) {
+    console.error('uploadPhoto 오류:', e);
     return null;
   }
 }
@@ -312,15 +321,27 @@ export default function WriteScreen() {
           onPress={async () => {
             if (!title) return;
             setLoading(true);
+            setError('');
 
             const uploadedUrls: string[] = [];
+            let uploadFailed = false;
             for (const uri of photos) {
               if (uri.startsWith('http')) {
                 uploadedUrls.push(uri);
               } else {
                 const url = await uploadPhoto(uri);
-                if (url) uploadedUrls.push(url);
+                if (url) {
+                  uploadedUrls.push(url);
+                } else {
+                  uploadFailed = true;
+                }
               }
+            }
+
+            if (uploadFailed) {
+              setLoading(false);
+              setError('일부 이미지 업로드에 실패했습니다. 네트워크를 확인하고 다시 시도해주세요.');
+              return;
             }
 
             const productData = {
