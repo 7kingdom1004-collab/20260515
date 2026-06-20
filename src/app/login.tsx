@@ -44,11 +44,31 @@ export default function LoginScreen() {
     setLoading(true);
     setError('');
 
+    // 진단 로그
+    console.log('[OAuth Debug] Platform.OS:', Platform.OS);
     if (Platform.OS === 'web') {
+      console.log('[OAuth Debug] window.location.origin:', window.location.origin);
+    }
+    const testLink = Linking.createURL('auth/callback');
+    console.log('[OAuth Debug] Linking.createURL result:', testLink);
+
+    if (Platform.OS === 'web') {
+      const origin = window.location.origin;
+      console.log('[OAuth Debug] Web redirectTo:', `${origin}/auth/callback`);
+
+      // localhost이면 모바일에서 접근 불가
+      if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+        const errorMsg = 'localhost에서는 모바일에서 로그인할 수 없습니다.\n\n해결방법:\n1. EAS 빌드 APK 사용하기\n2. 또는 개발 서버 IP(192.168.x.x:8081)로 접속하기';
+        console.warn('[OAuth Debug] localhost 감지 -', errorMsg);
+        setError(errorMsg);
+        setLoading(false);
+        return;
+      }
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${origin}/auth/callback`,
         },
       });
       if (error) {
