@@ -99,8 +99,12 @@ export default function LoginScreen() {
       if (!sessionError && sessionData.user) {
         router.replace('/');
       } else {
-        setError('세션 처리에 실패했습니다.');
+        setError('세션 처리에 실패했습니다. 다시 시도해주세요.');
       }
+    } else if (result.type === 'cancel' || result.type === 'dismiss') {
+      setError('');
+    } else {
+      setError('Google 로그인에 실패했습니다. 잠시 후 다시 시도해주세요.');
     }
     setLoading(false);
   };
@@ -199,6 +203,13 @@ export default function LoginScreen() {
             <Text style={[styles.signupLink, { color: theme.primary }]}>회원가입</Text>
           </Pressable>
         </View>
+
+        <View style={{ height: 24 }} />
+
+        {/* Browse without login */}
+        <Pressable onPress={() => router.replace('/')}>
+          <Text style={[styles.browseText, { color: theme.textSecondary }]}>로그인 없이 둘러보기</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -279,6 +290,11 @@ const styles = StyleSheet.create({
   signupLink: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  browseText: {
+    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '500',
   },
   dividerContainer: {
     flexDirection: 'row',

@@ -131,6 +131,13 @@ export default function SignupScreen() {
             <Text style={styles.signupButtonText}>가입하기</Text>
           )}
         </Pressable>
+
+        <View style={{ height: 24 }} />
+
+        {/* Browse without login */}
+        <Pressable onPress={() => router.replace('/')}>
+          <Text style={[styles.browseText, { color: theme.textSecondary }]}>로그인 없이 둘러보기</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -183,5 +190,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  browseText: {
+    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
