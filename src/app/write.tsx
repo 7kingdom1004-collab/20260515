@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Image, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
 import { addItem, updateItem, type ListItem } from '@/store/items';
@@ -45,6 +46,7 @@ export default function WriteScreen() {
   const { id: editId } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priceMode, setPriceMode] = useState<'sell' | 'share'>('sell');
@@ -110,6 +112,7 @@ export default function WriteScreen() {
           {editId ? '게시글 수정하기' : '논현2동에 올리기'}
         </Text>
         <Pressable
+          style={{ paddingHorizontal: Spacing.two, paddingVertical: Spacing.one }}
           onPress={() => {
             setShowSaveToast(true);
             Animated.sequence([
@@ -117,8 +120,7 @@ export default function WriteScreen() {
               Animated.delay(2000),
               Animated.timing(saveToastOpacity, { toValue: 0, duration: 300, useNativeDriver: true }),
             ]).start(() => setShowSaveToast(false));
-          }}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          }}>
           <Text style={[styles.tempSaveBtn, { color: theme.primary }]}>임시저장</Text>
         </Pressable>
       </SafeAreaView>
@@ -316,7 +318,14 @@ export default function WriteScreen() {
       </ScrollView>
 
       {/* Bottom Button */}
-      <SafeAreaView style={[styles.bottomBar, { borderTopColor: theme.border }]}>
+      <View
+        style={[
+          styles.bottomBar,
+          {
+            borderTopColor: theme.border,
+            paddingBottom: insets.bottom + Spacing.two,
+          },
+        ]}>
         <Pressable
           onPress={async () => {
             if (!title) return;
@@ -437,7 +446,7 @@ export default function WriteScreen() {
             <Text style={styles.submitButtonText}>작성 완료</Text>
           )}
         </Pressable>
-      </SafeAreaView>
+      </View>
 
       {/* Save Toast */}
       {showSaveToast && (
