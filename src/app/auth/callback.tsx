@@ -17,20 +17,11 @@ export default function AuthCallback() {
       if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
         subscription.unsubscribe();
         router.replace('/');
-      } else if (event === 'SIGNED_OUT') {
-        subscription.unsubscribe();
-        router.replace('/login');
       }
     });
 
-    const timeout = setTimeout(() => {
-      subscription.unsubscribe();
-      router.replace('/login');
-    }, 5000);
-
     return () => {
       subscription.unsubscribe();
-      clearTimeout(timeout);
     };
   }, []);
 
