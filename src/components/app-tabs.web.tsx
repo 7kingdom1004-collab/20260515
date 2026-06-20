@@ -4,10 +4,13 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View, useColorScheme } from 'react-native';
 
 import { Colors, Spacing } from '@/constants/theme';
+import { useUser } from '@/context/user-context';
 
 export default function AppTabs() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' || scheme == null ? 'light' : scheme];
+  const { userRole } = useUser();
+  const isAdmin = userRole === 'admin';
 
   return (
     <Tabs>
@@ -23,9 +26,9 @@ export default function AppTabs() {
           <TabTrigger name="chat" href="/chat" asChild>
             <TabButton icon="chatbubble-outline" activeIcon="chatbubble" label="채팅" scheme={scheme} />
           </TabTrigger>
-          <TabTrigger name="admin" href="/admin" asChild>
+          {isAdmin && <TabTrigger name="admin" href="/admin" asChild>
             <TabButton icon="shield-outline" activeIcon="shield" label="관리자" scheme={scheme} />
-          </TabTrigger>
+          </TabTrigger>}
           <TabTrigger name="my" href="/my" asChild>
             <TabButton icon="person-outline" activeIcon="person" label="나의 당근" scheme={scheme} />
           </TabTrigger>

@@ -1,10 +1,14 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Image, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -36,6 +40,51 @@ export default function LoginScreen() {
     router.replace('/');
   };
 
+  const signInWithGoogle = async () => {
+    setLoading(true);
+    setError('');
+
+    if (Platform.OS === 'web') {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) {
+        setError('Google 로그인에 실패했습니다.');
+        setLoading(false);
+      }
+      return;
+    }
+
+    const redirectUrl = Linking.createURL('/');
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectUrl,
+        skipBrowserRedirect: true,
+      },
+    });
+
+    if (error || !data.url) {
+      setError('Google 로그인에 실패했습니다.');
+      setLoading(false);
+      return;
+    }
+
+    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
+    if (result.type === 'success') {
+      const { data: sessionData, error: sessionError } = await supabase.auth.exchangeCodeForSession(result.url);
+      if (!sessionError && sessionData.user) {
+        router.replace('/');
+      } else {
+        setError('세션 처리에 실패했습니다.');
+      }
+    }
+    setLoading(false);
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
       {/* Header */}
@@ -48,6 +97,11 @@ export default function LoginScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
+        {/* Logo */}
+        <View style={styles.logoSection}>
+          <Image source={require('@/assets/images/carrot.png')} style={styles.logo} />
+        </View>
+
         {/* Title */}
         <View style={styles.titleSection}>
           <Text style={[styles.title, { color: theme.text }]}>당신의 계정으로 로그인하세요</Text>
@@ -98,6 +152,24 @@ export default function LoginScreen() {
           )}
         </Pressable>
 
+        {/* Divider */}
+        <View style={styles.dividerContainer}>
+          <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+          <Text style={[styles.dividerText, { color: theme.textSecondary }]}>또는</Text>
+          <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+        </View>
+
+        {/* Google Login Button */}
+        <Pressable
+          onPress={signInWithGoogle}
+          disabled={loading}
+          style={[styles.googleButton, { opacity: loading ? 0.6 : 1 }]}>
+          <View style={styles.googleIconContainer}>
+            <Ionicons name="logo-google" size={18} color="#4285F4" />
+          </View>
+          <Text style={styles.googleButtonText}>Google로 로그인</Text>
+        </Pressable>
+
         <View style={{ height: 40 }} />
 
         {/* Signup Link */}
@@ -130,6 +202,15 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.four,
+  },
+  logoSection: {
+    alignItems: 'center',
+    marginBottom: Spacing.four,
+  },
+  logo: {
+    width: 80,
+    height: 80,
+    resizeMode: 'contain',
   },
   titleSection: {
     marginBottom: Spacing.four,
@@ -178,5 +259,44 @@ const styles = StyleSheet.create({
   signupLink: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: Spacing.three,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    marginHorizontal: Spacing.two,
+    fontSize: 13,
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 40,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#dadce0',
+    marginHorizontal: Spacing.three,
+    overflow: 'hidden',
+  },
+  googleIconContainer: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  googleButtonText: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#3c4043',
+    letterSpacing: 0.25,
+    paddingRight: 40,
   },
 });

@@ -1,9 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
+import { useUser } from '@/context/user-context';
 import { supabase } from '@/lib/supabase';
 
 const MENU_ITEMS = [
@@ -17,32 +18,7 @@ const MENU_ITEMS = [
 export default function MyScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const [userName, setUserName] = useState('');
-  const [userRole, setUserRole] = useState('user');
-  const [userTier, setUserTier] = useState('free');
-  const [userId, setUserId] = useState('');
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUserName(user?.user_metadata?.name ?? '');
-      setUserId(user?.id ?? '');
-
-      // users 테이블에서 role, tier 조회 (이메일 기반)
-      if (user?.email) {
-        supabase
-          .from('users')
-          .select('role, tier')
-          .eq('email', user.email)
-          .single()
-          .then(({ data }) => {
-            if (data) {
-              setUserRole(data.role);
-              setUserTier(data.tier);
-            }
-          });
-      }
-    });
-  }, []);
+  const { userName, userRole, userTier } = useUser();
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>

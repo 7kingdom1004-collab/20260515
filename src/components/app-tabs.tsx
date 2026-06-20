@@ -4,10 +4,13 @@ import React from 'react';
 import { useColorScheme } from 'react-native';
 
 import { Colors } from '@/constants/theme';
+import { useUser } from '@/context/user-context';
 
 export default function AppTabs() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' || scheme == null ? 'light' : scheme];
+  const { userRole } = useUser();
+  const isAdmin = userRole === 'admin';
 
   return (
     <NativeTabs
@@ -45,7 +48,7 @@ export default function AppTabs() {
         />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="admin">
+      {isAdmin && <NativeTabs.Trigger name="admin">
         <NativeTabs.Trigger.Label>관리자</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={{
@@ -53,7 +56,7 @@ export default function AppTabs() {
             selected: <NativeTabs.Trigger.VectorIcon family={Ionicons} name="shield" />,
           }}
         />
-      </NativeTabs.Trigger>
+      </NativeTabs.Trigger>}
 
       <NativeTabs.Trigger name="my">
         <NativeTabs.Trigger.Label>나의 당근</NativeTabs.Trigger.Label>

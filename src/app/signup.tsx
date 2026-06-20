@@ -28,7 +28,7 @@ export default function SignupScreen() {
     }
 
     setLoading(true);
-    const { error: signupError } = await supabase.auth.signUp({
+    const { data, error: signupError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -42,20 +42,8 @@ export default function SignupScreen() {
       return;
     }
 
-    // users 테이블에 데이터 저장
-    const { error: insertError } = await supabase
-      .from('users')
-      .insert([
-        {
-          email,
-          name,
-          tier: 'free',
-          role: 'user',
-        },
-      ]);
-
-    if (insertError) {
-      setError('사용자 정보 저장에 실패했습니다.');
+    if (data.user && !data.session) {
+      setError('가입 완료! 이메일을 확인하고 로그인해주세요.');
       return;
     }
 

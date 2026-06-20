@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/hooks/use-theme';
+import { useUser } from '@/context/user-context';
 import { Spacing } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 
@@ -17,36 +18,20 @@ interface User {
 export default function AdminScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const { userRole, loadingRole } = useUser();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState('user');
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
 
+  const isAdmin = userRole === 'admin';
+
   useEffect(() => {
-    const checkAdminAccess = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.id) {
-        const { data } = await supabase
-          .from('users')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-
-        if (data?.role !== 'admin') {
-          Alert.alert('접근 거부', '관리자만 접근 가능합니다.');
-          router.back();
-          return;
-        }
-        setUserRole(data.role);
-      }
-    };
-
     const fetchUsers = async () => {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('users')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: true });
 
       if (data) {
         setUsers(data as User[]);
@@ -54,9 +39,10 @@ export default function AdminScreen() {
       setLoading(false);
     };
 
-    checkAdminAccess();
-    fetchUsers();
-  }, [router]);
+    if (isAdmin) {
+      fetchUsers();
+    }
+  }, [isAdmin]);
 
   const toggleUserSelection = (userId: string) => {
     const newSelected = new Set(selectedUsers);
@@ -88,7 +74,7 @@ export default function AdminScreen() {
       const { data } = await supabase
         .from('users')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: true });
 
       if (data) {
         setUsers(data as User[]);
@@ -119,13 +105,39 @@ export default function AdminScreen() {
     const { data } = await supabase
       .from('users')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: true });
 
     if (data) {
       setUsers(data as User[]);
     }
     setLoading(false);
   };
+
+  if (loadingRole) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={theme.primary} />
+      </SafeAreaView>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+        <View style={[styles.header, { borderBottomColor: theme.border }]}>
+          <Pressable onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="chevron-back" size={24} color={theme.text} />
+          </Pressable>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>관리자 페이지</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={[styles.accessDeniedContainer, { backgroundColor: theme.background }]}>
+          <Ionicons name="shield-outline" size={64} color={theme.textSecondary} />
+          <Text style={[styles.accessDeniedTitle, { color: theme.text }]}>경고: 관리자만 입장할 수 있습니다</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
@@ -179,14 +191,13 @@ export default function AdminScreen() {
                 />
               </Pressable>
               <View style={styles.userInfo}>
-                <Text style={[styles.userName, { color: theme.text }]}>{user.name}</Text>
-                <View style={styles.userDetailsRow}>
+                <View style={styles.userNameRow}>
+                  <Text style={[styles.userName, { color: theme.text }]}>{user.name}</Text>
                   <Text style={[styles.userEmail, { color: theme.textSecondary }]}>{user.email}</Text>
-                  <Text style={[styles.separator, { color: theme.textSecondary }]}>│</Text>
-                  <Text style={[styles.tierBadgeText, { color: user.tier === 'premium' ? theme.primary : theme.textSecondary }]}>
-                    {user.tier === 'premium' ? '⭐ 유료 회원' : '무료 회원'}
-                  </Text>
                 </View>
+                <Text style={[styles.tierBadgeText, { color: user.tier === 'premium' ? theme.primary : theme.textSecondary }]}>
+                  {user.tier === 'premium' ? '⭐ 유료 회원' : '무료 회원'}
+                </Text>
               </View>
 
               <View style={styles.actions}>
@@ -270,7 +281,8 @@ const styles = StyleSheet.create({
   bulkActionsContainer: {
     flexDirection: 'row',
     paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
+    paddingTop: Spacing.four,
+    paddingBottom: Spacing.two,
     borderBottomWidth: 1,
     gap: Spacing.one,
     alignItems: 'center',
@@ -328,6 +340,11 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: Spacing.one,
   },
+  userNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   userName: {
     fontSize: 15,
     fontWeight: '600',
@@ -378,17 +395,28 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bottomStatsLabel: {
-    fontSize: 12,
+    fontSize: 15,
     marginBottom: 4,
     fontWeight: '700',
   },
   bottomStatsValue: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
   },
   bottomStatsDivider: {
     fontSize: 12,
     marginHorizontal: 8,
     opacity: 0.3,
+  },
+  accessDeniedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: Spacing.three,
+  },
+  accessDeniedTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
