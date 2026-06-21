@@ -18,6 +18,7 @@ export interface ListItem {
   thumbnailColor: string;
   thumbnailImage?: string;
   userId?: string;
+  isHidden?: boolean;
 }
 
 export let items: ListItem[] = [

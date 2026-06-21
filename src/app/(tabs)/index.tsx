@@ -5,6 +5,7 @@ import { FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from '
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useUser } from '@/context/user-context';
 import { selectedDistrict, setSelectedDistrict } from '@/store/location';
 import { getItems, initItems, type ListItem, type PriceType, addItem, updateItem } from '@/store/items';
 import { initProducts, addProductDetail } from '@/data/products';
@@ -142,12 +143,19 @@ function ProductCard({ item, theme }: { item: ListItem; theme: ReturnType<typeof
   return (
     <Pressable
       onPress={() => router.push(`/product/${item.id}`)}
-      style={[styles.card, { borderBottomColor: theme.border }]}>
-      {item.thumbnailImage ? (
-        <Image source={{ uri: item.thumbnailImage }} style={styles.thumbnail} />
-      ) : (
-        <View style={[styles.thumbnail, { backgroundColor: item.thumbnailColor }]} />
-      )}
+      style={[styles.card, { borderBottomColor: theme.border, opacity: item.isHidden ? 0.4 : 1 }]}>
+      <View style={styles.thumbnailContainer}>
+        {item.thumbnailImage ? (
+          <Image source={{ uri: item.thumbnailImage }} style={styles.thumbnail} />
+        ) : (
+          <View style={[styles.thumbnail, { backgroundColor: item.thumbnailColor }]} />
+        )}
+        {item.isHidden && (
+          <View style={styles.hiddenBadge}>
+            <Text style={styles.hiddenBadgeText}>숨김</Text>
+          </View>
+        )}
+      </View>
 
       <View style={styles.cardBody}>
         <Text style={[styles.title, { color: theme.text }]} numberOfLines={2}>
@@ -191,6 +199,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
+  const { userRole } = useUser();
   const [activeCategory, setActiveCategory] = useState('전체');
   const [primaryLocation, setPrimaryLocation] = useState('논현2동');
   const [subLocation, setSubLocation] = useState('신천동');
@@ -199,11 +208,16 @@ export default function HomeScreen() {
 
   useEffect(() => {
     Promise.all([initItems(), initProducts()]).then(async () => {
-      const { data } = await supabase
+      let query = supabase
         .from('products')
         .select('*')
-        .eq('is_hidden', false)
         .order('created_at', { ascending: false });
+
+      if (userRole !== 'admin') {
+        query = query.eq('is_hidden', false);
+      }
+
+      const { data } = await query;
 
       if (data) {
         data.forEach((row) => {
@@ -220,6 +234,7 @@ export default function HomeScreen() {
             thumbnailColor: row.thumbnail_color,
             thumbnailImage: row.thumbnail_image ?? undefined,
             userId: row.user_id ?? undefined,
+            isHidden: row.is_hidden ?? false,
           };
           if (!getItems().find((i) => i.id === row.id)) {
             addItem(itemData);
@@ -258,12 +273,16 @@ export default function HomeScreen() {
 
       setLocalItems([...getItems()]);
 
-      supabase
+      let query = supabase
         .from('products')
         .select('*')
-        .eq('is_hidden', false)
-        .order('created_at', { ascending: false })
-        .then(({ data }) => {
+        .order('created_at', { ascending: false });
+
+      if (userRole !== 'admin') {
+        query = query.eq('is_hidden', false);
+      }
+
+      query.then(({ data }) => {
           if (data) {
             data.forEach((row) => {
               const itemData = {
@@ -279,6 +298,7 @@ export default function HomeScreen() {
                 thumbnailColor: row.thumbnail_color,
                 thumbnailImage: row.thumbnail_image ?? undefined,
                 userId: row.user_id ?? undefined,
+                isHidden: row.is_hidden ?? false,
               };
               if (!getItems().find((i) => i.id === row.id)) {
                 addItem(itemData);
@@ -473,11 +493,28 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.three,
     borderBottomWidth: 1,
   },
+  thumbnailContainer: {
+    position: 'relative',
+    marginRight: Spacing.three,
+  },
   thumbnail: {
     width: 110,
     height: 110,
     borderRadius: 10,
-    marginRight: Spacing.three,
+  },
+  hiddenBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderBottomLeftRadius: 10,
+  },
+  hiddenBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
   },
   cardBody: {
     flex: 1,

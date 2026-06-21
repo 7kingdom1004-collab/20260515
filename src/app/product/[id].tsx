@@ -91,7 +91,10 @@ export default function ProductDetailScreen() {
   const [photoIndex, setPhotoIndex] = useState(0);
   const [containerWidth, setContainerWidth] = useState(0);
   const [showMenu, setShowMenu] = useState(false);
+  const [showHideConfirm, setShowHideConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showHideSuccess, setShowHideSuccess] = useState(false);
+  const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const toastOpacity = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<ScrollView>(null);
 
@@ -542,13 +545,9 @@ export default function ProductDetailScreen() {
                   )}
                   <Pressable
                     style={styles.menuItem}
-                    onPress={async () => {
+                    onPress={() => {
                       setShowMenu(false);
-                      await supabase
-                        .from('products')
-                        .update({ is_hidden: true })
-                        .eq('id', id);
-                      router.replace('/');
+                      setShowHideConfirm(true);
                     }}>
                     <Ionicons name="eye-off" size={20} color={theme.text} />
                     <Text style={[styles.menuItemText, { color: theme.text }]}>숨기기</Text>
@@ -599,11 +598,94 @@ export default function ProductDetailScreen() {
                   setShowDeleteConfirm(false);
                   await supabase.from('products').delete().eq('id', id);
                   removeItem(id!);
-                  router.replace('/');
+                  setShowDeleteSuccess(true);
                 }}>
                 <Text style={styles.confirmDeleteButtonText}>삭제</Text>
               </Pressable>
             </View>
+          </View>
+        </>
+      )}
+
+      {/* Hide Confirm Modal */}
+      {showHideConfirm && (
+        <>
+          <Pressable
+            style={[StyleSheet.absoluteFill, styles.modalBackdrop]}
+            onPress={() => setShowHideConfirm(false)}
+          />
+          <View style={styles.confirmModal}>
+            <Text style={[styles.confirmTitle, { color: theme.text }]}>숨기시겠습니까?</Text>
+            <Text style={[styles.confirmMessage, { color: theme.textSecondary }]}>
+              숨긴 게시글은 상품 목록에 표시되지 않습니다.
+            </Text>
+            <View style={styles.confirmButtonRow}>
+              <Pressable
+                style={[styles.confirmButton, { borderColor: theme.border }]}
+                onPress={() => setShowHideConfirm(false)}>
+                <Text style={[styles.confirmButtonText, { color: theme.text }]}>취소</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.confirmButton, styles.confirmDeleteButton]}
+                onPress={async () => {
+                  setShowHideConfirm(false);
+                  await supabase
+                    .from('products')
+                    .update({ is_hidden: true })
+                    .eq('id', id);
+                  setShowHideSuccess(true);
+                }}>
+                <Text style={styles.confirmDeleteButtonText}>숨기기</Text>
+              </Pressable>
+            </View>
+          </View>
+        </>
+      )}
+
+      {/* Hide Success Modal */}
+      {showHideSuccess && (
+        <>
+          <Pressable
+            style={[StyleSheet.absoluteFill, styles.modalBackdrop]}
+            onPress={() => {
+              setShowHideSuccess(false);
+              router.replace('/');
+            }}
+          />
+          <View style={styles.successModal}>
+            <Text style={[styles.successTitle, { color: theme.text }]}>숨겨졌습니다</Text>
+            <Pressable
+              style={[styles.successButton, { backgroundColor: theme.primary }]}
+              onPress={() => {
+                setShowHideSuccess(false);
+                router.replace('/');
+              }}>
+              <Text style={styles.successButtonText}>확인</Text>
+            </Pressable>
+          </View>
+        </>
+      )}
+
+      {/* Delete Success Modal */}
+      {showDeleteSuccess && (
+        <>
+          <Pressable
+            style={[StyleSheet.absoluteFill, styles.modalBackdrop]}
+            onPress={() => {
+              setShowDeleteSuccess(false);
+              router.replace('/');
+            }}
+          />
+          <View style={styles.successModal}>
+            <Text style={[styles.successTitle, { color: theme.text }]}>삭제되었습니다</Text>
+            <Pressable
+              style={[styles.successButton, { backgroundColor: theme.primary }]}
+              onPress={() => {
+                setShowDeleteSuccess(false);
+                router.replace('/');
+              }}>
+              <Text style={styles.successButtonText}>확인</Text>
+            </Pressable>
           </View>
         </>
       )}
@@ -1039,6 +1121,34 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   confirmDeleteButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  successModal: {
+    position: 'absolute',
+    bottom: '50%',
+    left: '15%',
+    right: '15%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: Spacing.three,
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  successTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: Spacing.three,
+  },
+  successButton: {
+    borderRadius: 8,
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  successButtonText: {
     fontSize: 15,
     fontWeight: '600',
     color: '#FFFFFF',
