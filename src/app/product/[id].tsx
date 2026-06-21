@@ -547,10 +547,14 @@ export default function ProductDetailScreen() {
                       style={styles.menuItem}
                       onPress={async () => {
                         setShowMenu(false);
-                        await supabase
+                        const { error } = await supabase
                           .from('products')
                           .update({ is_deleted: false })
                           .eq('id', id);
+                        if (error) {
+                          Alert.alert('오류', `작업에 실패했습니다: ${error.message}`);
+                          return;
+                        }
                         setShowRestoreSuccess(true);
                       }}>
                       <Ionicons name="refresh" size={20} color={theme.text} />
@@ -581,10 +585,14 @@ export default function ProductDetailScreen() {
                       style={styles.menuItem}
                       onPress={async () => {
                         setShowMenu(false);
-                        await supabase
+                        const { error } = await supabase
                           .from('products')
                           .update({ is_hidden: false })
                           .eq('id', id);
+                        if (error) {
+                          Alert.alert('오류', `작업에 실패했습니다: ${error.message}`);
+                          return;
+                        }
                         setShowUnhideSuccess(true);
                       }}>
                       <Ionicons name="eye" size={20} color={theme.text} />
@@ -676,7 +684,11 @@ export default function ProductDetailScreen() {
                 style={[styles.confirmButton, styles.confirmDeleteButton]}
                 onPress={async () => {
                   setShowDeleteConfirm(false);
-                  await supabase.from('products').update({ is_deleted: true }).eq('id', id);
+                  const { error } = await supabase.from('products').update({ is_deleted: true }).eq('id', id);
+                  if (error) {
+                    Alert.alert('오류', `작업에 실패했습니다: ${error.message}`);
+                    return;
+                  }
                   removeItem(id!);
                   setShowDeleteSuccess(true);
                 }}>
@@ -709,10 +721,14 @@ export default function ProductDetailScreen() {
                 style={[styles.confirmButton, styles.confirmDeleteButton]}
                 onPress={async () => {
                   setShowHideConfirm(false);
-                  await supabase
+                  const { error } = await supabase
                     .from('products')
                     .update({ is_hidden: true })
                     .eq('id', id);
+                  if (error) {
+                    Alert.alert('오류', `작업에 실패했습니다: ${error.message}`);
+                    return;
+                  }
                   setShowHideSuccess(true);
                 }}>
                 <Text style={styles.confirmDeleteButtonText}>숨기기</Text>
@@ -840,7 +856,11 @@ export default function ProductDetailScreen() {
                 style={[styles.confirmButton, styles.confirmDeleteButton]}
                 onPress={async () => {
                   setShowPermanentDeleteConfirm(false);
-                  await supabase.from('products').delete().eq('id', id);
+                  const { error } = await supabase.from('products').delete().eq('id', id);
+                  if (error) {
+                    Alert.alert('오류', `작업에 실패했습니다: ${error.message}`);
+                    return;
+                  }
                   removeItem(id!);
                   setShowPermanentDeleteSuccess(true);
                 }}>
