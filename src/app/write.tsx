@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Image, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/use-theme';
+import { useUser } from '@/context/user-context';
 import { Spacing } from '@/constants/theme';
 import { addItem, updateItem, type ListItem } from '@/store/items';
 import { addProductDetail } from '@/data/products';
@@ -56,6 +57,7 @@ export default function WriteScreen() {
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { user } = useUser();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priceMode, setPriceMode] = useState<'sell' | 'share'>('sell');
@@ -375,6 +377,7 @@ export default function WriteScreen() {
               images: uploadedUrls.length > 0 ? uploadedUrls : null,
               seller_name: '나',
               seller_location: '논현2동',
+              user_id: user?.id,
             };
 
             let data, insertError;

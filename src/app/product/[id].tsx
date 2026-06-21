@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useUser } from '@/context/user-context';
 import { PRODUCT_DETAILS } from '@/data/products';
 import { getItems, removeItem } from '@/store/items';
 import { supabase } from '@/lib/supabase';
@@ -84,6 +85,7 @@ export default function ProductDetailScreen() {
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { user, userRole } = useUser();
   const [liked, setLiked] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
@@ -507,37 +509,45 @@ export default function ProductDetailScreen() {
             onPress={() => setShowMenu(false)}
           />
           <View style={styles.menuModal}>
-            <Pressable
-              style={styles.menuItem}
-              onPress={() => {
-                setShowMenu(false);
-                router.push(`/write?id=${id}`);
-              }}>
-              <Ionicons name="pencil" size={20} color={theme.text} />
-              <Text style={[styles.menuItemText, { color: theme.text }]}>게시글 수정하기</Text>
-            </Pressable>
-            <Pressable
-              style={styles.menuItem}
-              onPress={async () => {
-                setShowMenu(false);
-                await supabase
-                  .from('products')
-                  .update({ is_hidden: true })
-                  .eq('id', id);
-                router.replace('/');
-              }}>
-              <Ionicons name="eye-off" size={20} color={theme.text} />
-              <Text style={[styles.menuItemText, { color: theme.text }]}>숨기기</Text>
-            </Pressable>
-            <Pressable
-              style={styles.menuItem}
-              onPress={() => {
-                setShowMenu(false);
-                setShowDeleteConfirm(true);
-              }}>
-              <Ionicons name="trash" size={20} color="#FF3B30" />
-              <Text style={[styles.menuItemText, { color: '#FF3B30' }]}>삭제</Text>
-            </Pressable>
+            {/* 본인 글일 때만 수정 버튼 표시 */}
+            {product?.sellerName === '나' && (
+              <Pressable
+                style={styles.menuItem}
+                onPress={() => {
+                  setShowMenu(false);
+                  router.push(`/write?id=${id}`);
+                }}>
+                <Ionicons name="pencil" size={20} color={theme.text} />
+                <Text style={[styles.menuItemText, { color: theme.text }]}>게시글 수정하기</Text>
+              </Pressable>
+            )}
+            {/* 본인 글이거나 관리자면 숨기기/삭제 버튼 표시 */}
+            {(product?.sellerName === '나' || userRole === 'admin') && (
+              <>
+                <Pressable
+                  style={styles.menuItem}
+                  onPress={async () => {
+                    setShowMenu(false);
+                    await supabase
+                      .from('products')
+                      .update({ is_hidden: true })
+                      .eq('id', id);
+                    router.replace('/');
+                  }}>
+                  <Ionicons name="eye-off" size={20} color={theme.text} />
+                  <Text style={[styles.menuItemText, { color: theme.text }]}>숨기기</Text>
+                </Pressable>
+                <Pressable
+                  style={styles.menuItem}
+                  onPress={() => {
+                    setShowMenu(false);
+                    setShowDeleteConfirm(true);
+                  }}>
+                  <Ionicons name="trash" size={20} color="#FF3B30" />
+                  <Text style={[styles.menuItemText, { color: '#FF3B30' }]}>삭제</Text>
+                </Pressable>
+              </>
+            )}
             <Pressable
               style={[styles.menuItem, styles.menuItemClose]}
               onPress={() => setShowMenu(false)}>
