@@ -143,18 +143,22 @@ function ProductCard({ item, theme }: { item: ListItem; theme: ReturnType<typeof
   return (
     <Pressable
       onPress={() => router.push(`/product/${item.id}`)}
-      style={[styles.card, { borderBottomColor: theme.border, opacity: item.isHidden ? 0.4 : 1 }]}>
+      style={[styles.card, { borderBottomColor: theme.border, opacity: item.isHidden || item.isDeleted ? 0.4 : 1 }]}>
       <View style={styles.thumbnailContainer}>
         {item.thumbnailImage ? (
           <Image source={{ uri: item.thumbnailImage }} style={styles.thumbnail} />
         ) : (
           <View style={[styles.thumbnail, { backgroundColor: item.thumbnailColor }]} />
         )}
-        {item.isHidden && (
+        {item.isDeleted ? (
+          <View style={[styles.hiddenBadge, { backgroundColor: '#FF3B30' }]}>
+            <Text style={styles.hiddenBadgeText}>삭제됨</Text>
+          </View>
+        ) : item.isHidden ? (
           <View style={styles.hiddenBadge}>
             <Text style={styles.hiddenBadgeText}>숨김</Text>
           </View>
-        )}
+        ) : null}
       </View>
 
       <View style={styles.cardBody}>
@@ -214,7 +218,7 @@ export default function HomeScreen() {
         .order('created_at', { ascending: false });
 
       if (userRole !== 'admin') {
-        query = query.eq('is_hidden', false);
+        query = query.eq('is_hidden', false).eq('is_deleted', false);
       }
 
       const { data } = await query;
@@ -235,6 +239,7 @@ export default function HomeScreen() {
             thumbnailImage: row.thumbnail_image ?? undefined,
             userId: row.user_id ?? undefined,
             isHidden: row.is_hidden ?? false,
+            isDeleted: row.is_deleted ?? false,
           };
           if (!getItems().find((i) => i.id === row.id)) {
             addItem(itemData);
@@ -257,6 +262,8 @@ export default function HomeScreen() {
             interests: row.interests,
             tradeLocation: row.trade_location || '',
             userId: row.user_id ?? undefined,
+            isHidden: row.is_hidden ?? false,
+            isDeleted: row.is_deleted ?? false,
           });
         });
       }
@@ -279,7 +286,7 @@ export default function HomeScreen() {
         .order('created_at', { ascending: false });
 
       if (userRole !== 'admin') {
-        query = query.eq('is_hidden', false);
+        query = query.eq('is_hidden', false).eq('is_deleted', false);
       }
 
       query.then(({ data }) => {
@@ -299,6 +306,7 @@ export default function HomeScreen() {
                 thumbnailImage: row.thumbnail_image ?? undefined,
                 userId: row.user_id ?? undefined,
                 isHidden: row.is_hidden ?? false,
+                isDeleted: row.is_deleted ?? false,
               };
               if (!getItems().find((i) => i.id === row.id)) {
                 addItem(itemData);
@@ -321,6 +329,8 @@ export default function HomeScreen() {
                 interests: row.interests,
                 tradeLocation: row.trade_location || '',
                 userId: row.user_id ?? undefined,
+                isHidden: row.is_hidden ?? false,
+                isDeleted: row.is_deleted ?? false,
               });
             });
           }

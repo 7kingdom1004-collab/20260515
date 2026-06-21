@@ -19,6 +19,7 @@ export interface ListItem {
   thumbnailImage?: string;
   userId?: string;
   isHidden?: boolean;
+  isDeleted?: boolean;
 }
 
 export let items: ListItem[] = [

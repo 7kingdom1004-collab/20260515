@@ -20,6 +20,8 @@ export interface ProductDetail {
   tradeLocation: string;
   isHeavy?: boolean;
   userId?: string;
+  isHidden?: boolean;
+  isDeleted?: boolean;
 }
 
 export const PRODUCT_DETAILS: Record<string, ProductDetail> = {

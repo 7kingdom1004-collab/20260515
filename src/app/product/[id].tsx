@@ -95,6 +95,10 @@ export default function ProductDetailScreen() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showHideSuccess, setShowHideSuccess] = useState(false);
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
+  const [showUnhideSuccess, setShowUnhideSuccess] = useState(false);
+  const [showRestoreSuccess, setShowRestoreSuccess] = useState(false);
+  const [showPermanentDeleteConfirm, setShowPermanentDeleteConfirm] = useState(false);
+  const [showPermanentDeleteSuccess, setShowPermanentDeleteSuccess] = useState(false);
   const toastOpacity = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<ScrollView>(null);
 
@@ -117,6 +121,8 @@ export default function ProductDetailScreen() {
         interests: 0,
         tradeLocation: '',
         userId: listItem.userId,
+        isHidden: listItem.isHidden,
+        isDeleted: listItem.isDeleted,
       };
     }
   }
@@ -530,45 +536,119 @@ export default function ProductDetailScreen() {
                 );
               }
 
-              return (
-                <>
-                  {isOwner && (
+              const isDeleted = !!product?.isDeleted;
+              const isHidden = !!product?.isHidden;
+
+              if (isDeleted) {
+                // 삭제된 상품: 부활하기 + 완전삭제
+                return (
+                  <>
+                    <Pressable
+                      style={styles.menuItem}
+                      onPress={async () => {
+                        setShowMenu(false);
+                        await supabase
+                          .from('products')
+                          .update({ is_deleted: false })
+                          .eq('id', id);
+                        setShowRestoreSuccess(true);
+                      }}>
+                      <Ionicons name="refresh" size={20} color={theme.text} />
+                      <Text style={[styles.menuItemText, { color: theme.text }]}>부활하기</Text>
+                    </Pressable>
                     <Pressable
                       style={styles.menuItem}
                       onPress={() => {
                         setShowMenu(false);
-                        router.push(`/write?id=${id}`);
+                        setShowPermanentDeleteConfirm(true);
                       }}>
-                      <Ionicons name="pencil" size={20} color={theme.text} />
-                      <Text style={[styles.menuItemText, { color: theme.text }]}>게시글 수정하기</Text>
+                      <Ionicons name="trash" size={20} color="#FF3B30" />
+                      <Text style={[styles.menuItemText, { color: '#FF3B30' }]}>완전삭제</Text>
                     </Pressable>
-                  )}
-                  <Pressable
-                    style={styles.menuItem}
-                    onPress={() => {
-                      setShowMenu(false);
-                      setShowHideConfirm(true);
-                    }}>
-                    <Ionicons name="eye-off" size={20} color={theme.text} />
-                    <Text style={[styles.menuItemText, { color: theme.text }]}>숨기기</Text>
-                  </Pressable>
-                  <Pressable
-                    style={styles.menuItem}
-                    onPress={() => {
-                      setShowMenu(false);
-                      setShowDeleteConfirm(true);
-                    }}>
-                    <Ionicons name="trash" size={20} color="#FF3B30" />
-                    <Text style={[styles.menuItemText, { color: '#FF3B30' }]}>삭제</Text>
-                  </Pressable>
-                  <Pressable
-                    style={[styles.menuItem, styles.menuItemClose]}
-                    onPress={() => setShowMenu(false)}>
-                    <Ionicons name="close" size={20} color={theme.text} />
-                    <Text style={[styles.menuItemText, { color: theme.text }]}>닫기</Text>
-                  </Pressable>
-                </>
-              );
+                    <Pressable
+                      style={[styles.menuItem, styles.menuItemClose]}
+                      onPress={() => setShowMenu(false)}>
+                      <Ionicons name="close" size={20} color={theme.text} />
+                      <Text style={[styles.menuItemText, { color: theme.text }]}>닫기</Text>
+                    </Pressable>
+                  </>
+                );
+              } else if (isHidden) {
+                // 숨긴 상품: 다시 보이기 + 삭제
+                return (
+                  <>
+                    <Pressable
+                      style={styles.menuItem}
+                      onPress={async () => {
+                        setShowMenu(false);
+                        await supabase
+                          .from('products')
+                          .update({ is_hidden: false })
+                          .eq('id', id);
+                        setShowUnhideSuccess(true);
+                      }}>
+                      <Ionicons name="eye" size={20} color={theme.text} />
+                      <Text style={[styles.menuItemText, { color: theme.text }]}>다시 보이기</Text>
+                    </Pressable>
+                    <Pressable
+                      style={styles.menuItem}
+                      onPress={() => {
+                        setShowMenu(false);
+                        setShowDeleteConfirm(true);
+                      }}>
+                      <Ionicons name="trash" size={20} color="#FF3B30" />
+                      <Text style={[styles.menuItemText, { color: '#FF3B30' }]}>삭제</Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.menuItem, styles.menuItemClose]}
+                      onPress={() => setShowMenu(false)}>
+                      <Ionicons name="close" size={20} color={theme.text} />
+                      <Text style={[styles.menuItemText, { color: theme.text }]}>닫기</Text>
+                    </Pressable>
+                  </>
+                );
+              } else {
+                // 정상 상품: 수정하기(본인만) + 숨기기 + 삭제
+                return (
+                  <>
+                    {isOwner && (
+                      <Pressable
+                        style={styles.menuItem}
+                        onPress={() => {
+                          setShowMenu(false);
+                          router.push(`/write?id=${id}`);
+                        }}>
+                        <Ionicons name="pencil" size={20} color={theme.text} />
+                        <Text style={[styles.menuItemText, { color: theme.text }]}>게시글 수정하기</Text>
+                      </Pressable>
+                    )}
+                    <Pressable
+                      style={styles.menuItem}
+                      onPress={() => {
+                        setShowMenu(false);
+                        setShowHideConfirm(true);
+                      }}>
+                      <Ionicons name="eye-off" size={20} color={theme.text} />
+                      <Text style={[styles.menuItemText, { color: theme.text }]}>숨기기</Text>
+                    </Pressable>
+                    <Pressable
+                      style={styles.menuItem}
+                      onPress={() => {
+                        setShowMenu(false);
+                        setShowDeleteConfirm(true);
+                      }}>
+                      <Ionicons name="trash" size={20} color="#FF3B30" />
+                      <Text style={[styles.menuItemText, { color: '#FF3B30' }]}>삭제</Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.menuItem, styles.menuItemClose]}
+                      onPress={() => setShowMenu(false)}>
+                      <Ionicons name="close" size={20} color={theme.text} />
+                      <Text style={[styles.menuItemText, { color: theme.text }]}>닫기</Text>
+                    </Pressable>
+                  </>
+                );
+              }
             })()}
           </View>
         </>
@@ -596,7 +676,7 @@ export default function ProductDetailScreen() {
                 style={[styles.confirmButton, styles.confirmDeleteButton]}
                 onPress={async () => {
                   setShowDeleteConfirm(false);
-                  await supabase.from('products').delete().eq('id', id);
+                  await supabase.from('products').update({ is_deleted: true }).eq('id', id);
                   removeItem(id!);
                   setShowDeleteSuccess(true);
                 }}>
@@ -682,6 +762,111 @@ export default function ProductDetailScreen() {
               style={[styles.successButton, { backgroundColor: theme.primary }]}
               onPress={() => {
                 setShowDeleteSuccess(false);
+                router.replace('/');
+              }}>
+              <Text style={styles.successButtonText}>확인</Text>
+            </Pressable>
+          </View>
+        </>
+      )}
+
+      {/* Unhide Success Modal */}
+      {showUnhideSuccess && (
+        <>
+          <Pressable
+            style={[StyleSheet.absoluteFill, styles.modalBackdrop]}
+            onPress={() => {
+              setShowUnhideSuccess(false);
+              router.replace('/');
+            }}
+          />
+          <View style={styles.successModal}>
+            <Text style={[styles.successTitle, { color: theme.text }]}>다시 보이게 되었습니다</Text>
+            <Pressable
+              style={[styles.successButton, { backgroundColor: theme.primary }]}
+              onPress={() => {
+                setShowUnhideSuccess(false);
+                router.replace('/');
+              }}>
+              <Text style={styles.successButtonText}>확인</Text>
+            </Pressable>
+          </View>
+        </>
+      )}
+
+      {/* Restore Success Modal */}
+      {showRestoreSuccess && (
+        <>
+          <Pressable
+            style={[StyleSheet.absoluteFill, styles.modalBackdrop]}
+            onPress={() => {
+              setShowRestoreSuccess(false);
+              router.replace('/');
+            }}
+          />
+          <View style={styles.successModal}>
+            <Text style={[styles.successTitle, { color: theme.text }]}>복구되었습니다</Text>
+            <Pressable
+              style={[styles.successButton, { backgroundColor: theme.primary }]}
+              onPress={() => {
+                setShowRestoreSuccess(false);
+                router.replace('/');
+              }}>
+              <Text style={styles.successButtonText}>확인</Text>
+            </Pressable>
+          </View>
+        </>
+      )}
+
+      {/* Permanent Delete Confirm Modal */}
+      {showPermanentDeleteConfirm && (
+        <>
+          <Pressable
+            style={[StyleSheet.absoluteFill, styles.modalBackdrop]}
+            onPress={() => setShowPermanentDeleteConfirm(false)}
+          />
+          <View style={styles.confirmModal}>
+            <Text style={[styles.confirmTitle, { color: theme.text }]}>완전히 삭제하시겠습니까?</Text>
+            <Text style={[styles.confirmMessage, { color: theme.textSecondary }]}>
+              이 작업은 되돌릴 수 없습니다. 게시글과 이미지가 서버에서 영구적으로 삭제됩니다.
+            </Text>
+            <View style={styles.confirmButtonRow}>
+              <Pressable
+                style={[styles.confirmButton, { borderColor: theme.border }]}
+                onPress={() => setShowPermanentDeleteConfirm(false)}>
+                <Text style={[styles.confirmButtonText, { color: theme.text }]}>취소</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.confirmButton, styles.confirmDeleteButton]}
+                onPress={async () => {
+                  setShowPermanentDeleteConfirm(false);
+                  await supabase.from('products').delete().eq('id', id);
+                  removeItem(id!);
+                  setShowPermanentDeleteSuccess(true);
+                }}>
+                <Text style={styles.confirmDeleteButtonText}>완전삭제</Text>
+              </Pressable>
+            </View>
+          </View>
+        </>
+      )}
+
+      {/* Permanent Delete Success Modal */}
+      {showPermanentDeleteSuccess && (
+        <>
+          <Pressable
+            style={[StyleSheet.absoluteFill, styles.modalBackdrop]}
+            onPress={() => {
+              setShowPermanentDeleteSuccess(false);
+              router.replace('/');
+            }}
+          />
+          <View style={styles.successModal}>
+            <Text style={[styles.successTitle, { color: theme.text }]}>완전히 삭제되었습니다</Text>
+            <Pressable
+              style={[styles.successButton, { backgroundColor: theme.primary }]}
+              onPress={() => {
+                setShowPermanentDeleteSuccess(false);
                 router.replace('/');
               }}>
               <Text style={styles.successButtonText}>확인</Text>
