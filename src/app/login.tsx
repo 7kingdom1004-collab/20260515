@@ -87,23 +87,43 @@ export default function LoginScreen() {
       },
     });
 
-    if (error || !data.url) {
-      setError('Google 로그인에 실패했습니다.');
+    if (error) {
+      console.error('[OAuth] signInWithOAuth error:', error.message, error);
+      setError(`Google 로그인 오류: ${error.message}\n\nSupabase Google Provider 설정을 확인하세요.`);
       setLoading(false);
       return;
     }
 
+    if (!data.url) {
+      console.error('[OAuth] No URL returned - Supabase Google provider 설정 확인 필요');
+      setError('Google 로그인을 시작할 수 없습니다.\nSupabase Dashboard에서 Google Provider를 활성화했는지 확인하세요.');
+      setLoading(false);
+      return;
+    }
+
+    console.log('[OAuth] Starting WebBrowser.openAuthSessionAsync with URL:', data.url);
     const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
+    console.log('[OAuth] WebBrowser result:', result.type);
+
     if (result.type === 'success') {
+      console.log('[OAuth] Got code, exchanging for session...');
       const { data: sessionData, error: sessionError } = await supabase.auth.exchangeCodeForSession(result.url);
       if (!sessionError && sessionData.user) {
+        console.log('[OAuth] Session created successfully:', sessionData.user.email);
         router.replace('/');
       } else {
-        setError('세션 처리에 실패했습니다. 다시 시도해주세요.');
+        console.error('[OAuth] exchangeCodeForSession error:', sessionError);
+        setError(`세션 처리 실패: ${sessionError?.message || '알 수 없는 오류'}`);
       }
     } else if (result.type === 'cancel' || result.type === 'dismiss') {
-      setError('');
+      console.warn('[OAuth] User canceled or WebBrowser dismissed');
+      setError(
+        result.type === 'dismiss'
+          ? '구글 인증이 완료되지 않았습니다.\n\n새 APK가 설치되어 있는지 확인하세요.\n(carrot:// scheme 등록 필요)\n\n명령어:\neas build --profile preview --platform android\n또는\nnpx expo run:android'
+          : '구글 로그인을 취소했습니다.'
+      );
     } else {
+      console.error('[OAuth] Unexpected result type:', result);
       setError('Google 로그인에 실패했습니다. 잠시 후 다시 시도해주세요.');
     }
     setLoading(false);
