@@ -101,7 +101,16 @@ export default function LoginScreen() {
       return;
     }
 
-    console.log('[OAuth] Starting WebBrowser.openAuthSessionAsync with URL:', data.url);
+    // Android: deep link로 auth/callback.tsx가 처리하도록 브라우저만 열기
+    if (Platform.OS === 'android') {
+      console.log('[OAuth] Android: Opening browser only (auth/callback will handle code)');
+      await WebBrowser.openBrowserAsync(data.url);
+      setLoading(false);
+      return;
+    }
+
+    // iOS: openAuthSessionAsync로 code를 받아서 직접 처리
+    console.log('[OAuth] iOS: Starting WebBrowser.openAuthSessionAsync with URL:', data.url);
     const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
     console.log('[OAuth] WebBrowser result:', result.type);
 
@@ -117,11 +126,7 @@ export default function LoginScreen() {
       }
     } else if (result.type === 'cancel' || result.type === 'dismiss') {
       console.warn('[OAuth] User canceled or WebBrowser dismissed');
-      setError(
-        result.type === 'dismiss'
-          ? '구글 인증이 완료되지 않았습니다.\n\n새 APK가 설치되어 있는지 확인하세요.\n(carrot:// scheme 등록 필요)\n\n명령어:\neas build --profile preview --platform android\n또는\nnpx expo run:android'
-          : '구글 로그인을 취소했습니다.'
-      );
+      setError('구글 로그인을 취소했습니다.');
     } else {
       console.error('[OAuth] Unexpected result type:', result);
       setError('Google 로그인에 실패했습니다. 잠시 후 다시 시도해주세요.');

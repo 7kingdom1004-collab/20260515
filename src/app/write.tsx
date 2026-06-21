@@ -1,7 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Image, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,11 +12,6 @@ import { supabase } from '@/lib/supabase';
 
 async function uploadPhoto(uri: string): Promise<string | null> {
   try {
-    // Android file:// URI를 FileSystem으로 base64 읽기 (fetch 대신)
-    const base64 = await FileSystem.readAsStringAsync(uri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-
     const uriLower = uri.toLowerCase();
     const contentType = uriLower.includes('.png') ? 'image/png'
       : uriLower.includes('.webp') ? 'image/webp'
@@ -25,16 +19,17 @@ async function uploadPhoto(uri: string): Promise<string | null> {
     const ext = contentType.split('/')[1].replace('jpeg', 'jpg');
     const path = `${Date.now()}.${ext}`;
 
-    // base64 → Uint8Array 변환 후 업로드
-    const binaryStr = atob(base64);
-    const bytes = new Uint8Array(binaryStr.length);
-    for (let i = 0; i < binaryStr.length; i++) {
-      bytes[i] = binaryStr.charCodeAt(i);
-    }
+    // FormData: React Native native file handling
+    const formData = new FormData();
+    formData.append('file', {
+      uri,
+      type: contentType,
+      name: `photo.${ext}`,
+    } as any);
 
     const { data, error } = await supabase.storage
       .from('product-images')
-      .upload(path, bytes, { contentType });
+      .upload(path, formData as any);
 
     if (error) {
       console.error('이미지 업로드 실패:', error.message, error);
