@@ -101,16 +101,8 @@ export default function LoginScreen() {
       return;
     }
 
-    // Android: deep link로 auth/callback.tsx가 처리하도록 브라우저만 열기
-    if (Platform.OS === 'android') {
-      console.log('[OAuth] Android: Opening browser only (auth/callback will handle code)');
-      await WebBrowser.openBrowserAsync(data.url);
-      setLoading(false);
-      return;
-    }
-
-    // iOS: openAuthSessionAsync로 code를 받아서 직접 처리
-    console.log('[OAuth] iOS: Starting WebBrowser.openAuthSessionAsync with URL:', data.url);
+    // Android/iOS 공통: openAuthSessionAsync는 redirectUrl을 감시하고 Chrome Tab을 자동으로 닫음
+    console.log('[OAuth] Starting WebBrowser.openAuthSessionAsync with URL:', data.url);
     const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
     console.log('[OAuth] WebBrowser result:', result.type);
 
