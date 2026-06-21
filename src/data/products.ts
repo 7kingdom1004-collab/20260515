@@ -19,6 +19,7 @@ export interface ProductDetail {
   interests: number;
   tradeLocation: string;
   isHeavy?: boolean;
+  userId?: string;
 }
 
 export const PRODUCT_DETAILS: Record<string, ProductDetail> = {

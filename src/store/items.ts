@@ -17,6 +17,7 @@ export interface ListItem {
   heartCount: number;
   thumbnailColor: string;
   thumbnailImage?: string;
+  userId?: string;
 }
 
 export let items: ListItem[] = [

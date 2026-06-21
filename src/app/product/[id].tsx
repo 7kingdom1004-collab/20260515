@@ -102,7 +102,7 @@ export default function ProductDetailScreen() {
       product = {
         title: listItem.title,
         price: listItem.price,
-        sellerName: '나',
+        sellerName: listItem.userId === user?.id ? '나' : '익명',
         sellerLocation: listItem.location || '논현2동',
         temperature: 36.5,
         category: '중고거래',
@@ -113,6 +113,7 @@ export default function ProductDetailScreen() {
         views: 0,
         interests: 0,
         tradeLocation: '',
+        userId: listItem.userId,
       };
     }
   }
@@ -509,51 +510,67 @@ export default function ProductDetailScreen() {
             onPress={() => setShowMenu(false)}
           />
           <View style={styles.menuModal}>
-            {/* 본인 글일 때만 수정 버튼 표시 */}
-            {product?.sellerName === '나' && (
-              <Pressable
-                style={styles.menuItem}
-                onPress={() => {
-                  setShowMenu(false);
-                  router.push(`/write?id=${id}`);
-                }}>
-                <Ionicons name="pencil" size={20} color={theme.text} />
-                <Text style={[styles.menuItemText, { color: theme.text }]}>게시글 수정하기</Text>
-              </Pressable>
-            )}
-            {/* 본인 글이거나 관리자면 숨기기/삭제 버튼 표시 */}
-            {(product?.sellerName === '나' || userRole === 'admin') && (
-              <>
-                <Pressable
-                  style={styles.menuItem}
-                  onPress={async () => {
-                    setShowMenu(false);
-                    await supabase
-                      .from('products')
-                      .update({ is_hidden: true })
-                      .eq('id', id);
-                    router.replace('/');
-                  }}>
-                  <Ionicons name="eye-off" size={20} color={theme.text} />
-                  <Text style={[styles.menuItemText, { color: theme.text }]}>숨기기</Text>
-                </Pressable>
-                <Pressable
-                  style={styles.menuItem}
-                  onPress={() => {
-                    setShowMenu(false);
-                    setShowDeleteConfirm(true);
-                  }}>
-                  <Ionicons name="trash" size={20} color="#FF3B30" />
-                  <Text style={[styles.menuItemText, { color: '#FF3B30' }]}>삭제</Text>
-                </Pressable>
-              </>
-            )}
-            <Pressable
-              style={[styles.menuItem, styles.menuItemClose]}
-              onPress={() => setShowMenu(false)}>
-              <Ionicons name="close" size={20} color={theme.text} />
-              <Text style={[styles.menuItemText, { color: theme.text }]}>닫기</Text>
-            </Pressable>
+            {/* 실제 소유자 체크: user.id와 product.userId가 일치하고 둘 다 존재해야 함 */}
+            {(() => {
+              const isOwner = !!user?.id && !!product?.userId && user.id === product.userId;
+              const isAdmin = userRole === 'admin';
+
+              if (!isOwner && !isAdmin) {
+                // 권한 없으면 닫기 버튼만
+                return (
+                  <Pressable
+                    style={[styles.menuItem, styles.menuItemClose]}
+                    onPress={() => setShowMenu(false)}>
+                    <Ionicons name="close" size={20} color={theme.text} />
+                    <Text style={[styles.menuItemText, { color: theme.text }]}>닫기</Text>
+                  </Pressable>
+                );
+              }
+
+              return (
+                <>
+                  {isOwner && (
+                    <Pressable
+                      style={styles.menuItem}
+                      onPress={() => {
+                        setShowMenu(false);
+                        router.push(`/write?id=${id}`);
+                      }}>
+                      <Ionicons name="pencil" size={20} color={theme.text} />
+                      <Text style={[styles.menuItemText, { color: theme.text }]}>게시글 수정하기</Text>
+                    </Pressable>
+                  )}
+                  <Pressable
+                    style={styles.menuItem}
+                    onPress={async () => {
+                      setShowMenu(false);
+                      await supabase
+                        .from('products')
+                        .update({ is_hidden: true })
+                        .eq('id', id);
+                      router.replace('/');
+                    }}>
+                    <Ionicons name="eye-off" size={20} color={theme.text} />
+                    <Text style={[styles.menuItemText, { color: theme.text }]}>숨기기</Text>
+                  </Pressable>
+                  <Pressable
+                    style={styles.menuItem}
+                    onPress={() => {
+                      setShowMenu(false);
+                      setShowDeleteConfirm(true);
+                    }}>
+                    <Ionicons name="trash" size={20} color="#FF3B30" />
+                    <Text style={[styles.menuItemText, { color: '#FF3B30' }]}>삭제</Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.menuItem, styles.menuItemClose]}
+                    onPress={() => setShowMenu(false)}>
+                    <Ionicons name="close" size={20} color={theme.text} />
+                    <Text style={[styles.menuItemText, { color: theme.text }]}>닫기</Text>
+                  </Pressable>
+                </>
+              );
+            })()}
           </View>
         </>
       )}

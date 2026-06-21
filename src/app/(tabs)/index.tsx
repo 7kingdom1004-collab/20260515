@@ -219,6 +219,7 @@ export default function HomeScreen() {
             heartCount: row.heart_count,
             thumbnailColor: row.thumbnail_color,
             thumbnailImage: row.thumbnail_image ?? undefined,
+            userId: row.user_id ?? undefined,
           };
           if (!getItems().find((i) => i.id === row.id)) {
             addItem(itemData);
@@ -240,6 +241,7 @@ export default function HomeScreen() {
             views: row.views,
             interests: row.interests,
             tradeLocation: row.trade_location || '',
+            userId: row.user_id ?? undefined,
           });
         });
       }
@@ -276,6 +278,7 @@ export default function HomeScreen() {
                 heartCount: row.heart_count,
                 thumbnailColor: row.thumbnail_color,
                 thumbnailImage: row.thumbnail_image ?? undefined,
+                userId: row.user_id ?? undefined,
               };
               if (!getItems().find((i) => i.id === row.id)) {
                 addItem(itemData);
@@ -297,6 +300,7 @@ export default function HomeScreen() {
                 views: row.views,
                 interests: row.interests,
                 tradeLocation: row.trade_location || '',
+                userId: row.user_id ?? undefined,
               });
             });
           }
